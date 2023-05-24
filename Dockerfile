@@ -10,6 +10,6 @@ COPY api/package*.json ./api/
 RUN cd api && yarn
 COPY api/server.js ./api/
 
-EXPOSE 3000
+EXPOSE 2222
 
 CMD ["node", "./api/server.js"]

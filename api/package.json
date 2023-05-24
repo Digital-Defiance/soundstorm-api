@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.bundle.js",
     "build": "webpack",
-    "dev": "nodemon ./server.js localhost 3000"
+    "dev": "nodemon ./server.js localhost 2222"
   },
   "repository": {
     "type": "git",
