@@ -16,8 +16,8 @@ app.get('/api/version', (req, res) => {
   const versionFilename = path.join(__dirname, '.version');
   const tagFilename = path.join(__dirname, '.tag');
   if (existsSync(versionFilename) && existsSync(tagFilename)) {
-    const version = readFileSync(versionFilename)
-    const tag = readFileSync(tagFilename)
+    const version = readFileSync(versionFilename);
+    const tag = readFileSync(tagFilename);
     res.json({version: version.toString(), tag: tag.toString(), context: 'local'});
     return;
   }
@@ -43,7 +43,6 @@ app.get('/api/version', (req, res) => {
           return;
       });
   });
-  res.status(500).send({ message: 'Unable to get current hash', error: err });
 });
 
 app.get('/api/users', (req, res) => {
