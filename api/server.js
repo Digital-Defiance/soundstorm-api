@@ -46,7 +46,7 @@ app.post('/api/user', (req, res) => {
   res.json("user addedd");
 });
 
-app.get('/', (req,res) => {
+app.get('*', (req,res) => {
   res.sendFile(path.join(__dirname, '../soundstorm-react/build/index.html'));
 });
 
