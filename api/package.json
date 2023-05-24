@@ -15,6 +15,7 @@
   "author": "Jessica Mulein, Digital Defiance Contributors",
   "license": "MIT",
   "dependencies": {
+    "child_process": "^1.0.2",
     "express": "^4.17.1",
     "http-proxy-middleware": "^1.0.4"
   },
