@@ -5,7 +5,8 @@
   "scripts": {
     "acr:login": "az acr login --name digitaldefiance",
     "build:docker": "docker build -t soundstorm:latest .",
-    "tag:acr": "docker tag soundstorm:latest digitaldefiance.azurecr.io/soundstorm:latest"
+    "tag:acr": "docker tag soundstorm:latest digitaldefiance.azurecr.io/soundstorm:latest",
+    "tag:list": "git show-ref --tags -d"
   },
   "author": "Jessica Mulein, Digital Defiance Contributors, and parts from the CoreUI Team (https://github.com/coreui)",
   "license": "MIT",
