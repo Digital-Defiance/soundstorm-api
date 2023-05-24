@@ -9,7 +9,7 @@ COPY --from=ui-build /usr/src/app/soundstorm-react/build ./soundstorm-react/buil
 COPY api/package*.json ./api/
 RUN cd api && yarn
 COPY api/server.js ./api/
-RUN git ref $(git rev-parse HEAD) > ./api/.version
+RUN git rev-parse HEAD > ./api/.version
 RUN git describe --tags --abbrev=0 --exact-match HEAD > ./api/.tag
 
 EXPOSE 2222
