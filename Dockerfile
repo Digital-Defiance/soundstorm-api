@@ -1,7 +1,7 @@
 FROM node:18 AS ui-build
 WORKDIR /usr/src/app
 COPY soundstorm-react/ ./soundstorm-react/
-RUN yarn react:build
+RUN cd soundstorm-react && yarn && yarn build
 
 FROM node:18 AS server-build
 WORKDIR /root/

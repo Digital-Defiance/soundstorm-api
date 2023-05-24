@@ -3,6 +3,7 @@
   "version": "0.430.3",
   "description": "SoundStorm is a website for composers and musicians to organize their sound thoughts and compositions",
   "scripts": {
+    "npm:install-globals": "npm install -g npm yarn",
     "nvm:install": "nvm install 16",
     "nvm:use": "nvm use 16",
     "acr:login": "az acr login --name digitaldefiance",
