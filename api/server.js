@@ -1,47 +1,47 @@
 const { exec } = require('child_process');
 const express = require('express');
-const { readFileSync, existsSync } = require('fs');
+const { readFileSync, existsSync, fstatSync } = require('fs');
 const path = require('path');
 const app = express(),
       bodyParser = require("body-parser");
       port = 2222;
+const _REACT_DIR_ = path.join(__dirname, '../soundstorm-react/build');
+const _API_DIR_ = path.join(__dirname);
 
 // place holder for the data
 const users = [];
 
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, '../soundstorm-react/build')));
+app.use(express.static(_REACT_DIR_));
 
+// TODO: throttle this/limit to only certain IPs/users
 app.get('/api/version', (req, res) => {
-  const versionFilename = path.join(__dirname, '.version');
-  const tagFilename = path.join(__dirname, '.tag');
-  if (existsSync(versionFilename) && existsSync(tagFilename)) {
-    const version = readFileSync(versionFilename);
-    const tag = readFileSync(tagFilename);
-    res.json({version: version.toString(), tag: tag.toString(), context: 'local'});
+  const apiVersionFilename = path.join(_API_DIR_, '.version');
+  const apiTagFilename = path.join(_API_DIR_, '.tag');
+  const reactVersionFilename = path.join(_REACT_DIR_, '.version');
+  const reactTagFilename = path.join(_REACT_DIR_, '.tag');
+  console.log(_API_DIR_, _REACT_DIR_, apiVersionFilename, apiTagFilename, reactVersionFilename, reactTagFilename);
+  if (!existsSync(apiVersionFilename) || !existsSync(apiTagFilename) || !existsSync(reactVersionFilename) || !existsSync(reactTagFilename)) {
+    res.send(500, 'Version file not found');
     return;
   }
-  exec('git describe --tags', (err, stdout, stderr) => {
-      if (err) {
-          res.status(500).send({ message: 'Unable to get current tag version', error: err });
-          return;
-      }
-      const tagVersion = stdout.trim();
-      
-      exec('git rev-parse HEAD', (err, stdout, stderr) => {
-          if (err) {
-              res.status(500).send({ message: 'Unable to get current hash', error: err });
-              return;
-          }
-          const currentHash = stdout.trim();
-          
-          res.send({
-              tag: tagVersion,
-              version: currentHash,
-              context: 'git'
-          });
-          return;
-      });
+  const apiDate = fstatSync(apiVersionFilename).mtime;
+  const apiVersion = readFileSync(apiVersionFilename, 'utf8');
+  const apiTag = readFileSync(apiTagFilename, 'utf8');
+  const reactDate = fstatSync(reactVersionFilename).mtime;
+  const reactVersion = readFileSync(reactVersionFilename, 'utf8');
+  const reactTag = readFileSync(reactTagFilename, 'utf8');
+  res.json({
+    api: {
+      date: apiDate,
+      tag: apiTag,
+      version: apiVersion,
+    },
+    react: {
+      date: reactDate,
+      tag: reactTag,
+      version: reactVersion,
+    },
   });
 });
 

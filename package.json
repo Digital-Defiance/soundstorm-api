@@ -16,7 +16,9 @@
     "react:build": "cd soundstorm-react && yarn && yarn build",
     "react:start": "cd soundstorm-react && yarn start",
     "git:push": "git push origin main",
-    "git:push:tags": "git push origin --tags"
+    "git:push:tags": "git push origin --tags",
+    "git:current-tags": "git describe --tags",
+    "git:all-tags": "git tag"
   },
   "author": "Jessica Mulein, Digital Defiance Contributors, and parts from the CoreUI Team (https://github.com/coreui)",
   "license": "MIT",
