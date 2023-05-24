@@ -1,5 +1,6 @@
 const { exec } = require('child_process');
 const express = require('express');
+const { readFileSync, existsSync } = require('fs');
 const path = require('path');
 const app = express(),
       bodyParser = require("body-parser");
@@ -12,6 +13,14 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../soundstorm-react/build')));
 
 app.get('/api/version', (req, res) => {
+  const versionFilename = path.join(__dirname, '.version');
+  const tagFilename = path.join(__dirname, '.tag');
+  if (existsSync(versionFilename) && existsSync(tagFilename)) {
+    const version = readFileSync(versionFilename)
+    const tag = readFileSync(tagFilename)
+    res.json({version: version.toString(), tag: tag.toString(), context: 'local'});
+    return;
+  }
   exec('git describe --tags', (err, stdout, stderr) => {
       if (err) {
           res.status(500).send({ message: 'Unable to get current tag version', error: err });
@@ -27,11 +36,14 @@ app.get('/api/version', (req, res) => {
           const currentHash = stdout.trim();
           
           res.send({
-              tagVersion,
-              currentHash
+              tag: tagVersion,
+              version: currentHash,
+              context: 'git'
           });
+          return;
       });
   });
+  res.status(500).send({ message: 'Unable to get current hash', error: err });
 });
 
 app.get('/api/users', (req, res) => {
