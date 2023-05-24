@@ -1,0 +1,16 @@
+{
+  "name": "soundstorm",
+  "version": "0.430.3",
+  "description": "SoundStorm is a website for composers and musicians to organize their sound thoughts and compositions",
+  "scripts": {
+    "acr:login": "az acr login --name digitaldefiance",
+    "build:docker": "docker build -t soundstorm:latest .",
+    "tag:acr": "docker tag soundstorm:latest digitaldefiance.azurecr.io/soundstorm:latest"
+  },
+  "author": "Jessica Mulein, Digital Defiance Contributors, and parts from the CoreUI Team (https://github.com/coreui)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Digital-Defiance/soundstorm-api.git"
+  }
+}
