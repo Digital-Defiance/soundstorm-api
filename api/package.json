@@ -1,0 +1,26 @@
+{
+  "name": "soundstorm-api",
+  "version": "0.430.1",
+  "description": "SoundStorm API server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.bundle.js",
+    "build": "webpack",
+    "dev": "nodemon ./server.js localhost 3080"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Digital-Defiance/soundstorm-api.git"
+  },
+  "author": "Jessica Mulein, Digital Defiance Contributors",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "http-proxy-middleware": "^1.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  }
+}

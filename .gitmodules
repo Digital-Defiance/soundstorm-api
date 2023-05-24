@@ -1,0 +1,3 @@
+[submodule "soundstorm-react"]
+	path = soundstorm-react
+	url = https://github.com/Digital-Defiance/soundstorm-react.git
