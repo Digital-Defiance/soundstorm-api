@@ -6,6 +6,8 @@ const app = express(),
       bodyParser = require("body-parser");
       port = 2222;
 
+const production = process.env.NODE_ENV === 'production';
+
 /* we need to be able to be able to run on windows, wsl (ubuntu), and linux/mac
  * it seems on windows the process.cwd() works, but on ubuntu it doesn't
  */ 

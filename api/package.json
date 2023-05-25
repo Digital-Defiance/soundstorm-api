@@ -9,7 +9,8 @@
     "git:current-tags": "git describe --tags",
     "git:all-tags": "git tag",
     "start": "node server.bundle.js",
-    "build": "webpack && yarn mark-ver",
+    "build": "webpack --mode=production && yarn mark-ver",
+    "build:dev": "webpack --mode=development",
     "dev": "nodemon ./server.js localhost 2222",
     "mark-ver": "git rev-parse HEAD > ./.version && git describe --tags > ./.tag"
   },

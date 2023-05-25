@@ -13,6 +13,8 @@
     "acr:push": "docker push digitaldefiance.azurecr.io/soundstorm:latest",
     "tag:list": "git show-ref --tags -d",
     "api:build": "cd api && yarn && yarn build",
+    "api:build:dev": "cd api && yarn && yarn build:dev",
+    "api:dev": "cd api && yarn && yarn dev",
     "api:start": "cd api && yarn start",
     "react:build": "cd soundstorm-react && yarn && yarn build",
     "react:start": "cd soundstorm-react && yarn start",
