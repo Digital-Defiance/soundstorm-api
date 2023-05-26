@@ -10,6 +10,7 @@
     "git:all-tags": "git tag",
     "start": "node server.bundle.js",
     "tsc": "tsc",
+    "tsc:clean": "rm auth.js environment.js realmApp.js server.js user.service.js",
     "build": "yarn tsc && webpack --mode=production && yarn mark-ver",
     "build:dev": "yarn tsc && webpack --mode=development",
     "dev": "nodemon-ts ./server.ts localhost 2222",
