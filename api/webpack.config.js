@@ -1,23 +1,18 @@
 const path = require('path');
+const nodeExternals = require('webpack-node-externals');
 
 module.exports = {
-  entry: './server.ts',
+  entry: './server.js',
   mode: 'production',
+  optimization: {
+    minimize: false,
+  },
   target: 'node',
+  externals: {
+    'realm': 'commonjs realm'
+  },
   output: {
     path: path.resolve(__dirname, '.'),
     filename: 'server.bundle.js'
-  },
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/, // TypeScript loading for .ts and .tsx files
-        use: 'ts-loader',
-        exclude: /node_modules/,
-      },
-    ],
-  },
-  resolve: {
-    extensions: ['.tsx', '.ts', '.js'], // Added resolve for .ts and .tsx files
-  },
+  }
 };

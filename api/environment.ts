@@ -32,6 +32,6 @@ export const environment: IEnvironment = {
     siteUrl: process.env.SITE_URL || process.env.NODE_ENV === 'production' ? 'https://soundstorm.info' : `http://localhost:${defaultPort}`,
     nodePort: parseInt(process.env.PORT ? process.env.PORT : defaultPort.toString(), 10) || defaultPort,
     realm: {
-        appId: process.env.REALM_APP_ID || (process.env.NODE_ENV === 'production' ? 'soundstorm' : 'soundstorm-dev'),
+        appId: process.env.REALM_APP_ID || (process.env.NODE_ENV === 'production' ? 'soundstorm-wdkhs' : 'soundstorm-dev-udikj'),
     }
 };

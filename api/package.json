@@ -9,8 +9,9 @@
     "git:current-tags": "git describe --tags",
     "git:all-tags": "git tag",
     "start": "node server.bundle.js",
-    "build": "webpack --mode=production && yarn mark-ver",
-    "build:dev": "webpack --mode=development",
+    "tsc": "tsc",
+    "build": "yarn tsc && webpack --mode=production && yarn mark-ver",
+    "build:dev": "yarn tsc && webpack --mode=development",
     "dev": "nodemon-ts ./server.ts localhost 2222",
     "mark-ver": "git rev-parse HEAD > ./.version && git describe --tags > ./.tag"
   },
@@ -24,14 +25,16 @@
     "child_process": "^1.0.2",
     "express": "^4.17.1",
     "http-proxy-middleware": "^1.0.4",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "realm": "^11.9.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
     "nodemon-ts": "^1.0.1",
-    "ts-loader": "^9.4.3",
+    "react-native": "^0.71.8",
     "typescript": "^5.0.4",
     "webpack": "^5.84.1",
-    "webpack-cli": "^5.1.1"
+    "webpack-cli": "^5.1.1",
+    "webpack-node-externals": "^3.0.0"
   }
 }

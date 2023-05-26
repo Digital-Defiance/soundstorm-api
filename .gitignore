@@ -2,3 +2,9 @@ node_modules/
 api/.tag
 api/.version
 api/.date
+api/environment.js
+api/auth.js
+api/realmApp.js
+api/server.js
+api/user.service.js
+api/mongodb-realm/
