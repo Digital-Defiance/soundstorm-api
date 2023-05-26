@@ -2,7 +2,7 @@
   "name": "soundstorm-api",
   "version": "0.430.1",
   "description": "SoundStorm API server",
-  "main": "server.js",
+  "main": "server.bundle.js",
   "scripts": {
     "git:push": "git push origin main",
     "git:push:tags": "git push origin --tags",
@@ -11,7 +11,7 @@
     "start": "node server.bundle.js",
     "build": "webpack --mode=production && yarn mark-ver",
     "build:dev": "webpack --mode=development",
-    "dev": "nodemon ./server.js localhost 2222",
+    "dev": "nodemon-ts ./server.ts localhost 2222",
     "mark-ver": "git rev-parse HEAD > ./.version && git describe --tags > ./.tag"
   },
   "repository": {
@@ -23,11 +23,15 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "express": "^4.17.1",
-    "http-proxy-middleware": "^1.0.4"
+    "http-proxy-middleware": "^1.0.4",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
-    "nodemon": "^2.0.4",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "@types/express": "^4.17.17",
+    "nodemon-ts": "^1.0.1",
+    "ts-loader": "^9.4.3",
+    "typescript": "^5.0.4",
+    "webpack": "^5.84.1",
+    "webpack-cli": "^5.1.1"
   }
 }

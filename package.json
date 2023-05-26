@@ -21,12 +21,22 @@
     "git:push": "git push origin main",
     "git:push:tags": "git push origin --tags",
     "git:current-tags": "git describe --tags",
-    "git:all-tags": "git tag"
+    "git:all-tags": "git tag",
+    "build:all": "yarn react:build && yarn api:build"
   },
   "author": "Jessica Mulein, Digital Defiance Contributors, and parts from the CoreUI Team (https://github.com/coreui)",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/Digital-Defiance/soundstorm-api.git"
+  },
+  "dependencies": {
+    "nodemon-ts": "^1.0.1",
+    "realm": "^11.9.0"
+  },
+  "devDependencies": {
+    "@types/multer": "^1.4.7",
+    "ts-loader": "^9.4.3",
+    "typescript": "^5.0.4"
   }
 }
