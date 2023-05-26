@@ -10,8 +10,8 @@ COPY api/package*.json ./api/
 COPY api/.version ./api/
 COPY api/.tag ./api/
 RUN cd api && yarn
-COPY api/server.js ./api/
+COPY api/server.bundle.js ./api/
 
 EXPOSE 2222
 
-CMD ["node", "./api/server.js"]
+CMD ["node", "./api/server.bundle.js"]
