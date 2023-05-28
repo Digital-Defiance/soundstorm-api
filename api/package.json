@@ -24,6 +24,9 @@
   "dependencies": {
     "child_process": "^1.0.2",
     "express": "^4.17.1",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.0.0",
     "http-proxy-middleware": "^1.0.4",
     "mongodb-client-encryption": "^2.8.0",
     "mongoose": "^7.2.1",

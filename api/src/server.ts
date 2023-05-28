@@ -1,35 +1,66 @@
 import { exec } from 'child_process';
-import express from 'express';
+import express, { NextFunction } from 'express';
 import { readFileSync, existsSync, fstatSync, readdirSync } from 'fs';
 import { Request, Response } from 'express-serve-static-core';
 import path from 'path';
 import { environment, defaultPort, _API_DIR_, _REACT_DIR_ } from './environment';
 import { authenticateEmail, validateAuth } from './auth';
 import { RealmApp } from './realmApp';
-import multer, {diskStorage} from 'multer';
+import multer, { diskStorage, memoryStorage } from 'multer';
 import mongoose from 'mongoose';
 import { Mongo } from './db';
+import { body, validationResult } from 'express-validator';
+import { randomBytes } from 'crypto';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 console.log("Starting services...")
 Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
   console.log("Starting express...");
   const app = express(),
-        bodyParser = require("body-parser");
+    bodyParser = require("body-parser");
 
   app.use(bodyParser.json());
   app.use(express.static(_REACT_DIR_));
 
-  app.post('/api/authenticate', (req: Request, res: Response) => {
-    const email = (req.body.email ?? '').trim().toLowerCase();
-    const password = (req.body.password ?? '').trim();
+  // rate limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+  });
+
+  app.use(limiter);
+  app.use(helmet());
+
+  // Error handler middleware
+  app.use(function (err: Error, req: Request, res: Response, next: NextFunction) {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+  });
+
+  app.post('/api/authenticate', 
+  [
+    body('email').isEmail(),
+    body('password').isLength({ min: 5 })
+  ],
+  (req: Request, res: Response) => {
+    // Finds the validation errors in this request and wraps them in an object with handy functions
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const email = req.body.email;
+    const password = req.body.password;
+
     authenticateEmail(email, password, async (user: Realm.User, token: string) => {
-      // send the new token back in another authorization header and json send the user
       res.set('Authorization', `Bearer ${token}`);
       res.json(user);
     }, (err) => {
       res.status(500).send(err);
     });
-  });
+  }
+);
 
   // TODO: throttle this/limit to only certain IPs/users
   app.get('/api/version', (req: Request, res: Response) => {
@@ -50,7 +81,7 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
     const reactVersion = readFileSync(reactVersionFilename, 'utf8').trim().split('\n')[0];
     const reactTag = readFileSync(reactTagFilename, 'utf8').trim().split('\n')[0];
     res.json({
-      environment: { 
+      environment: {
         production: environment.production,
         apiBaseUrl: environment.apiBaseUrl,
         siteUrl: environment.siteUrl,
@@ -87,42 +118,64 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
       cb(null, "uploads/");
     },
     filename: (req, file, cb) => {
-      cb(null, file.originalname);
+      // Use crypto to generate a random filename
+      const randomName = randomBytes(16).toString('hex');
+      cb(null, `${randomName}${path.extname(file.originalname)}`);
     },
   });
   const upload = multer({ storage });
-  app.post("/api/upload", upload.single("file"), (req, res) => {
+
+  app.post("/api/upload", (req, res) => {
     validateAuth(req, res, () => {
-      // the request should have our file in 'file'
+      // The request should have our file in 'file'
       const file = req.file;
       if (!file) {
         res.status(400).send('No file uploaded');
         return;
       }
+
+      // The file contents are available in 'file.buffer'
+      const fileContents = file.buffer;
+
       const filename = file.originalname;
-      const filepath = file.path;
       const filesize = file.size;
       const filemimetype = file.mimetype;
+
       console.log(`Uploaded file: ${filename} (${filesize} bytes)`);
-      console.log(`  path: ${filepath}`);
       console.log(`  mimetype: ${filemimetype}`);
+
+      // make sure filename is komplete.db3
+      if (filename !== 'komplete.db3') {
+        res.status(400).send('Invalid file uploaded');
+        return;
+      }
+
+      if (filemimetype !== 'application/x-sqlite3') {
+        console.warn(`WARNING: mimetype is ${filemimetype} instead of application/x-sqlite3`);
+      }
+
       res.json({
         filename,
-        filepath,
         filesize,
         filemimetype,
+        contents: fileContents.toString()  // assuming it's text
       });
+
     }, () => {
       res.status(401).send('Unauthorized');
     });
   });
 
-  app.get('*', (req,res) => {
+  app.get('*', (req, res) => {
     res.sendFile(path.join(_REACT_DIR_, '/index.html'));
   });
 
   app.listen(environment.nodePort, () => {
-      console.log(`Server listening on the port::${environment.nodePort}`);
+    console.log(`Server listening on the port::${environment.nodePort}`);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.log('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 }, (err) => {
   console.log('Error connecting to MongoDB:', err);

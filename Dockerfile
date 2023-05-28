@@ -11,6 +11,7 @@ COPY api/.version ./api/
 COPY api/.tag ./api/
 RUN cd api && yarn
 COPY api/server.bundle.js ./api/
+RUN mkdir api/uploads
 
 EXPOSE 2222
 
