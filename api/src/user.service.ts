@@ -23,12 +23,12 @@ export async function refreshUser(email: string, user?: Realm.User): Promise<{ u
     return {user: user, token: token};
 }
 
-export async function addOrUpdateUser(email: string, password: string, user: Realm.User) {
+export async function addOrUpdateUser(email: string, password: string, user: Realm.User): Promise<void> {
     email = email.trim().toLowerCase();
     password = password.trim();
     const mongo = Mongo.getInstance();
     if (mongo === undefined) {
-        return false;
+        return;
     }
     const userDoc = await UserModel.findOne({ 
         $or: [
@@ -39,11 +39,13 @@ export async function addOrUpdateUser(email: string, password: string, user: Rea
 
     // hash the password with pbkdf2
     const passwordSalt: string = randomBytes(16).toString('hex');
+    console.log("generating password hash")
     pbkdf2(password, passwordSalt, _PBKDF_ROUNDS_, 64, 'sha512', async (err, derivedKey) => {
         if (err) {
             console.error(err);
             return;
         }
+        console.log("generated password hash")
 
         const passwordHash = derivedKey.toString('hex');
 
@@ -63,6 +65,7 @@ export async function addOrUpdateUser(email: string, password: string, user: Rea
             userDoc.passwordSalt = passwordSalt;
             await userDoc.save();
         }
+        console.log("saved user")
     });
 }
 

@@ -9,4 +9,4 @@ export const UserTokensSchema = new Schema({
   expiration: Date,
 });
 
-export const UserTokensModel = registerModel<UserToken>('User', UserTokensSchema);
+export const UserTokensModel = registerModel<UserToken>('UserToken', UserTokensSchema);
