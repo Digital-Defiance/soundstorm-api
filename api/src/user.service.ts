@@ -9,13 +9,6 @@ import { pbkdf2, randomBytes } from 'crypto';
 
 const _PBKDF_ROUNDS_ = 100000;
 
-let mongoDB: mongoose.Connection;
-Mongo.connect((c: mongoose.Connection) => {
-    mongoDB = c;
-}, (err) => {
-    console.error(err);
-});
-
 export async function refreshUser(email: string, user?: Realm.User): Promise<{ user: Realm.User, token: string } | false> {
     if (!user) {
         return false;

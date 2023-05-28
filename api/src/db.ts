@@ -12,23 +12,21 @@ export class Mongo implements IMongo {
         }
         this.mongoose = m;
         this.connection = c;
-        Mongo.instance = this;
     }
 
-    public static async connect(then: (db: mongoose.Connection) => void, err: (e: any) => void, options:mongoose.ConnectOptions = {}): Promise<Mongo> {
+    public static connect(then: (m: typeof mongoose, db: mongoose.Connection) => void, err: (e: any) => void, options:mongoose.ConnectOptions = {}) {
         if (Mongo.instance) {
-            then(Mongo.instance.connection);
+            then(Mongo.instance.mongoose, Mongo.instance.connection);
             return Mongo.instance;
         }
-        const MongoConnection = await mongoose.connect(environment.mongoUri, options);
-        const DB = MongoConnection.connection;
-        DB.once("open", (db: mongoose.Connection) => {
-            then(db);
-        });        
-        DB.on("error", (e) => {
+        console.log("Connecting to MongoDB")
+        const MongoConnection = mongoose.connect(environment.mongoUri, options).then((m: typeof mongoose) => {
+            console.log("Connected to MongoDB");
+            Mongo.instance = new Mongo(m, m.connection);
+            then(m, m.connection);
+        }).catch((e) => {
             err(e);
         });
-        return new Mongo(mongoose, DB);
     }
 
     public static getInstance(): Mongo | undefined {
