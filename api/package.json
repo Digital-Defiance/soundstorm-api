@@ -28,7 +28,8 @@
     "mongodb-client-encryption": "^2.8.0",
     "mongoose": "^7.2.1",
     "multer": "^1.4.5-lts.1",
-    "realm": "^11.9.0"
+    "realm": "^11.9.0",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",

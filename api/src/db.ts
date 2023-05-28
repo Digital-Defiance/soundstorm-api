@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { environment } from "./environment";
 import { IMongo } from "./interfaces/mongo";
+import { AllModels } from "./schema";
 
 export class Mongo implements IMongo {
     public readonly mongoose: typeof mongoose;

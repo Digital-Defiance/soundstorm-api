@@ -65,6 +65,9 @@ export async function clearPrefixedTable(prefix: string): Promise<boolean> {
 
 export function registerModel<T>(modelName: string, schema: Schema): Model<T> {
     const collectionName = collectionNamesByName[modelName];
+    if (modelMap.has(modelName)) {
+        return modelMap.get(modelName) as Model<T>;
+    }
     const newModel = mongooseModel<T>(modelName, schema, collectionName);
     modelMap.set(modelName, newModel);
     schemaMap.set(modelName, schema);
