@@ -25,7 +25,8 @@
     "git:all-tags": "git tag",
     "build:all": "yarn react:build && yarn api:build",
     "build:all:dev": "yarn react:build && yarn api:build:dev",
-    "all": "yarn && cd soundstorm-react && yarn && cd ../api && yarn && cd .."
+    "all": "yarn && cd soundstorm-react && yarn && cd ../api && yarn && cd ..",
+    "clean:all": "rm -rf node_modules api/node_modules soundstorm-react/node_modules"
   },
   "author": "Jessica Mulein, Digital Defiance Contributors, and parts from the CoreUI Team (https://github.com/coreui)",
   "license": "MIT",
