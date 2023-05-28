@@ -30,7 +30,14 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
   });
 
   app.use(limiter);
-  app.use(helmet());
+  app.use(
+    helmet.contentSecurityPolicy({
+      directives: {
+        defaultSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://realm.mongodb.com', 'https://cdn.jsdelivr.net', 'https://westus.azure.realm.mongodb.com']
+      }
+    })
+  );
 
   // Error handler middleware
   app.use(function (err: Error, req: Request, res: Response, next: NextFunction) {
