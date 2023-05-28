@@ -38,6 +38,10 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
     const reactVersionFilename = path.join(_REACT_DIR_, '.version');
     const reactTagFilename = path.join(_REACT_DIR_, '.tag');
     if (!existsSync(apiVersionFilename) || !existsSync(apiTagFilename) || !existsSync(reactVersionFilename) || !existsSync(reactTagFilename)) {
+      console.log(apiVersionFilename, existsSync(apiVersionFilename))
+      console.log(apiTagFilename, existsSync(apiTagFilename))
+      console.log(reactVersionFilename, existsSync(reactVersionFilename))
+      console.log(reactTagFilename, existsSync(reactTagFilename))
       res.status(500).send('Version files not found');
       return;
     }

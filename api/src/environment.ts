@@ -11,7 +11,8 @@ const _STOP_ON_WARNINGS_ = false;
 const cwd_1 = path.resolve(process.cwd());
 const cwd_2 = path.resolve(__dirname);
 const cwd = cwd_1.length > cwd_2.length ? cwd_1 : cwd_2;
-export const _API_DIR_ = cwd_1.length > cwd_2.length ? cwd_1 : cwd_2;
+export const _CWD_ = cwd_1.length > cwd_2.length ? cwd_1 : cwd_2;
+export const _API_DIR_ = (_CWD_.endsWith('src')) ? path.join(_CWD_, '../') : _CWD_;
 export const _REACT_DIR_ = path.join(cwd, '../../soundstorm-react/build');
 if (!existsSync(_API_DIR_) || !existsSync(_REACT_DIR_)) {
     console.error('API or React directory not found');
