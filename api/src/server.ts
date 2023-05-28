@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
 import express, { NextFunction } from 'express';
-import { readFileSync, existsSync, fstatSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, rmSync } from 'fs';
 import { Request, Response } from 'express-serve-static-core';
 import path from 'path';
 import { environment, defaultPort, _API_DIR_, _REACT_DIR_ } from './environment';
@@ -13,6 +13,7 @@ import { body, validationResult } from 'express-validator';
 import { randomBytes } from 'crypto';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { sqliteToMemory } from './sqlitemongo';
 
 console.log("Starting services...")
 Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
@@ -34,8 +35,9 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
     helmet.contentSecurityPolicy({
       directives: {
         defaultSrc: ["'self'"],
-        connectSrc: ["'self'", 'https://realm.mongodb.com', 'https://cdn.jsdelivr.net', 'https://westus.azure.realm.mongodb.com']
-      }
+        connectSrc: ["'self'", 'https://realm.mongodb.com', 'https://westus.azure.realm.mongodb.com'],
+        imgSrc: ["'self'", 'data:', 'https://cdn.jsdelivr.net'],
+      },
     })
   );
 
@@ -45,29 +47,29 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
     res.status(500).send('Something broke!');
   });
 
-  app.post('/api/authenticate', 
-  [
-    body('email').isEmail(),
-    body('password').isLength({ min: 5 })
-  ],
-  (req: Request, res: Response) => {
-    // Finds the validation errors in this request and wraps them in an object with handy functions
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+  app.post('/api/authenticate',
+    [
+      body('email').isEmail(),
+      body('password').isLength({ min: 5 })
+    ],
+    (req: Request, res: Response) => {
+      // Finds the validation errors in this request and wraps them in an object with handy functions
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const email = req.body.email;
+      const password = req.body.password;
+
+      authenticateEmail(email, password, async (user: Realm.User, token: string) => {
+        //res.set('Authorization', `Bearer ${token}`);
+        res.json({user,token});
+      }, (err) => {
+        res.status(500).send(err);
+      });
     }
-
-    const email = req.body.email;
-    const password = req.body.password;
-
-    authenticateEmail(email, password, async (user: Realm.User, token: string) => {
-      res.set('Authorization', `Bearer ${token}`);
-      res.json(user);
-    }, (err) => {
-      res.status(500).send(err);
-    });
-  }
-);
+  );
 
   // TODO: throttle this/limit to only certain IPs/users
   app.get('/api/version', (req: Request, res: Response) => {
@@ -122,7 +124,7 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
   // Configure multer storage
   const storage = diskStorage({
     destination: (req, file, cb) => {
-      cb(null, "uploads/");
+      cb(null, path.join(_API_DIR_, "uploads")+'/');
     },
     filename: (req, file, cb) => {
       // Use crypto to generate a random filename
@@ -132,17 +134,14 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
   });
   const upload = multer({ storage });
 
-  app.post("/api/upload", (req, res) => {
-    validateAuth(req, res, () => {
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
+    //validateAuth(req, res, () => {
       // The request should have our file in 'file'
       const file = req.file;
       if (!file) {
         res.status(400).send('No file uploaded');
         return;
       }
-
-      // The file contents are available in 'file.buffer'
-      const fileContents = file.buffer;
 
       const filename = file.originalname;
       const filesize = file.size;
@@ -157,20 +156,35 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
         return;
       }
 
-      if (filemimetype !== 'application/x-sqlite3') {
+      if (filemimetype !== 'application/x-sqlite3' && filemimetype !== 'application/octet-stream') {
         console.warn(`WARNING: mimetype is ${filemimetype} instead of application/x-sqlite3`);
       }
+
+      if (!existsSync(file.path)) {
+        res.status(500).send('File not found');
+        return;
+      }
+
+      /* TODO - further validate the file before trying to load it into sqlite
+       * can we check a simple magic number?  or is there a better way?
+       * sqliteToMemory will filter out any tables that don't match our 
+       * schema or that we don't need
+       */
+
+      const result = await sqliteToMemory(file.path);
+      rmSync(file.path);
+      const resultJson = JSON.stringify(Array.from(result));
 
       res.json({
         filename,
         filesize,
         filemimetype,
-        contents: fileContents.toString()  // assuming it's text
+        contents: resultJson
       });
 
-    }, () => {
-      res.status(401).send('Unauthorized');
-    });
+    // }, () => {
+    //   res.status(401).send('Unauthorized');
+    // });
   });
 
   app.get('*', (req, res) => {

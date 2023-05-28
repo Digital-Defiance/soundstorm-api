@@ -64,7 +64,7 @@ export async function validateAuth(req: Request<{}, any, any, ParsedQs, Record<s
             const email = req.body.email;
             const password = req.body.password;
             await authenticateEmail(email, password, async (user, token) => {
-                res.set('Authorization', `Bearer ${token}`);
+                //res.set('Authorization', `Bearer ${token}`);
                 next(req, res, token);
             }, (error) => {
                 res.status(401).send('Unauthorized');

@@ -10,3 +10,4 @@ api/realmApp.js
 api/server.js
 api/user.service.js
 api/mongodb-realm/
+komplete.db3
