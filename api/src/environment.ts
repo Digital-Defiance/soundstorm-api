@@ -1,7 +1,9 @@
 import path from 'path';
 import { existsSync } from 'fs';
+import { IEnvironment } from './interfaces/environment';
 
 export const defaultPort = 2222;
+const _STOP_ON_WARNINGS_ = false;
 
 /* we need to be able to be able to run on windows, wsl (ubuntu), and linux/mac
  * it seems on windows the process.cwd() works, but on ubuntu it doesn't
@@ -16,22 +18,31 @@ if (!existsSync(_API_DIR_) || !existsSync(_REACT_DIR_)) {
     process.exit(1);
 }
 
-export interface IEnvironment {
-    production: boolean;
-    apiBaseUrl: string;
-    siteUrl: string;
-    nodePort: number;
-    realm: {
-        appId: string;
-    };
-}
-
 export const environment: IEnvironment = {
     production: process.env.NODE_ENV === 'production',
     apiBaseUrl: process.env.API_BASE_URL || process.env.NODE_ENV === 'production' ? 'https://soundstorm.info/api' : `http://localhost:${defaultPort}/api`,
+    mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/soundstorm',
     siteUrl: process.env.SITE_URL || process.env.NODE_ENV === 'production' ? 'https://soundstorm.info' : `http://localhost:${defaultPort}`,
     nodePort: parseInt(process.env.PORT ? process.env.PORT : defaultPort.toString(), 10) || defaultPort,
     realm: {
         appId: process.env.REALM_APP_ID || (process.env.NODE_ENV === 'production' ? 'soundstorm-wdkhs' : 'soundstorm-dev-udikj'),
+        apiKey: process.env.REALM_API_KEY
     }
 };
+
+let warnings = false;
+if (!environment.realm.appId) {
+    warnings = true;
+    console.warn('Realm app ID not found');
+}
+if (!environment.realm.apiKey) {
+    warnings = true;
+    console.warn('Realm API key not found');
+}
+if (!environment.mongoUri) {
+    warnings = true;
+    console.warn('Mongo URI not found');
+}
+if (_STOP_ON_WARNINGS_ && warnings) {
+    process.exit(1);
+}

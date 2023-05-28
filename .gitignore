@@ -1,4 +1,6 @@
 node_modules/
+dist/
+api/dist
 api/.tag
 api/.version
 api/.date

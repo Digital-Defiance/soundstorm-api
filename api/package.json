@@ -10,10 +10,9 @@
     "git:all-tags": "git tag",
     "start": "node server.bundle.js",
     "tsc": "tsc",
-    "tsc:clean": "rm auth.js environment.js realmApp.js server.js user.service.js",
     "build": "yarn tsc && webpack --mode=production && yarn mark-ver",
     "build:dev": "yarn tsc && webpack --mode=development",
-    "dev": "nodemon-ts ./server.ts localhost 2222",
+    "dev": "nodemon-ts ./src/server.ts localhost 2222",
     "mark-ver": "git rev-parse HEAD > ./.version && git describe --tags > ./.tag"
   },
   "repository": {
@@ -26,6 +25,8 @@
     "child_process": "^1.0.2",
     "express": "^4.17.1",
     "http-proxy-middleware": "^1.0.4",
+    "mongodb-client-encryption": "^2.8.0",
+    "mongoose": "^7.2.1",
     "multer": "^1.4.5-lts.1",
     "realm": "^11.9.0"
   },

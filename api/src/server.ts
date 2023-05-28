@@ -5,9 +5,17 @@ import { Request, Response } from 'express-serve-static-core';
 import path from 'path';
 import { environment, defaultPort, _API_DIR_, _REACT_DIR_ } from './environment';
 import { authenticateEmail, validateAuth } from './auth';
-import { setUser, refreshUser, getTokenByEmail } from './user.service';
 import { RealmApp } from './realmApp';
 import multer, {diskStorage} from 'multer';
+import mongoose from 'mongoose';
+import { Mongo } from './db';
+
+let db: mongoose.Connection | undefined;
+Mongo.connect((c: mongoose.Connection) => {
+  db = c;
+}, (err) => {
+  console.error(err);
+});
 
 const app = express(),
       bodyParser = require("body-parser");
@@ -18,19 +26,9 @@ app.use(express.static(_REACT_DIR_));
 app.post('/api/authenticate', (req: Request, res: Response) => {
   const email = (req.body.email ?? '').trim().toLowerCase();
   const password = (req.body.password ?? '').trim();
-  authenticateEmail(email, password, async (user: Realm.User) => {
-    const accessToken = user.accessToken;
-    if (accessToken === null) {
-      res.status(500).send('No access token found');
-      return;
-    }
-    const newToken = await setUser(email, user, accessToken);
-    if (newToken === false) {
-      res.status(500).send('Failed to acquire refreshed token');
-      return;
-    }
+  authenticateEmail(email, password, async (user: Realm.User, token: string) => {
     // send the new token back in another authorization header and json send the user
-    res.set('Authorization', `Bearer ${newToken}`);
+    res.set('Authorization', `Bearer ${token}`);
     res.json(user);
   }, (err) => {
     res.status(500).send(err);
