@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto';
 import path from 'path';
 import multer from 'multer';
 import { User } from './interfaces/user';
-import { sqliteToMemory } from './sqlitemongo';
+import { sqliteFlattenedToMemory } from './sqlitemongo';
 import { _API_DIR_ } from './environment';
 
 export const storage = diskStorage({
@@ -50,7 +50,7 @@ export async function processFile(
   }
 
   const userFilename = `uploads/${user._id}.db3`;
-  const result = sqliteToMemory(file.path);
+  const result = sqliteFlattenedToMemory(file.path);
   if (result && result.size > 0 && result.has('k_sound_info')) {
     const flattened = flattenTables(result);
     if (flattened) {

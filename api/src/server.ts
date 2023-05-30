@@ -13,7 +13,6 @@ import { body, validationResult } from 'express-validator';
 import { randomBytes } from 'crypto';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { sqliteToMemory } from './sqlitemongo';
 import { processFile, upload } from './upload.service';
 import { User } from './interfaces/user';
 
