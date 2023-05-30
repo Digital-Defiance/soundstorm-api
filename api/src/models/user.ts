@@ -4,10 +4,11 @@ import { User } from '../interfaces/user';
 
 export const UserSchema = new Schema({
   _id: Schema.Types.ObjectId,
+  realm_id: { type: Schema.Types.ObjectId, unique: true },
   displayName: String,
   givenName: String,
   surname: String,
-  email: String,
+  email: { type: String, unique: true },
   passwordHash: String,
   passwordSalt: String
 });

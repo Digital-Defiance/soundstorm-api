@@ -5,7 +5,8 @@ import { UserToken } from '../interfaces/user_tokens';
 export const UserTokensSchema = new Schema({
   _id: Schema.Types.ObjectId,
   user_id: { type: Schema.Types.ObjectId, ref: 'User' },
-  token: String,
+  realm_user_id: Schema.Types.ObjectId,
+  token: { type: String, unique: true },
   expiration: Date,
 });
 

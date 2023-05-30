@@ -1,9 +1,4 @@
-import { MongoClient, Db } from 'mongodb';
-import { Database } from 'sqlite3';
-
-interface Named {
-  name: string;
-}
+import sqlite3, { Database } from "better-sqlite3";
 
 export const whitelistTables = [
   'k_bank_chain',
@@ -15,91 +10,35 @@ export const whitelistTables = [
   'k_sound_info',
 ];
 
-export async function sqliteToMemory(
-  sqlitePath: string,
-): Promise<Map<string, object[]>> {
-  if (typeof sqlitePath !== 'string') {
-    throw new Error(`Expected a valid sqlite3 filepath but instead got ${sqlitePath}`);
-  }
+export function sqliteToMemory(sqlitePath: string): Map<string, any> {
+  const db = new sqlite3(sqlitePath);
+  const result = new Map<string, any>();
 
-  const sqliteDb = new Database(sqlitePath);
-  const map = new Map<string, object[]>();
-  let error;
   try {
-    const tables = await getSqliteTables(sqliteDb);
-    for (const tableName of tables) {
-      if (!whitelistTables.includes(tableName)) {
-        console.log(`Skipping table ${tableName} because it is not in the whitelist.`)
-        continue;
+    const tablesQuery = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
+    const tables = db.prepare(tablesQuery).all();
+
+
+    for (let i = 0; i < tables.length; i++) {
+      const table = tables[i];
+      const tableName = (table as any).name as string;
+
+      for (let j = 0; j < whitelistTables.length; j++) {
+        const whitelistTable = whitelistTables[j];
+        if (tableName === whitelistTable) {
+          const rowsQuery = `SELECT * FROM ${tableName};`;
+          const rows = db.prepare(rowsQuery).all();
+  
+          result.set(tableName, rows);
+          break;
+        }
       }
-      const rows = await getSqliteRows(sqliteDb, tableName);
-      map.set(tableName, rows);
     }
   } catch (err) {
-    error = err;
+    console.error('Error reading SQLite database:', err);
   } finally {
-    sqliteDb.close();
+    db.close();
   }
 
-  if (error) {
-    throw error;
-  }
-  return map;
-}
-
-export async function memoryToMongo(
-  mongoURI: string,
-  mongoDbName = 'sqlite3',
-  map: Map<string, object[]>,
-) {
-  if (typeof mongoURI !== 'string') {
-    throw new Error(`Expected a valid mongodb URI but instead got ${mongoURI}`);
-  }
-  const mongoClient = await MongoClient.connect(mongoURI);
-  const mongoDb = mongoClient.db(mongoDbName);
-  for (const [tableName, rows] of map.entries()) {
-    await uploadToMongo(mongoDb, tableName, rows);
-  }
-}
-
-export async function getSqliteTables(sqliteDb: Database): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    const allTablesQuery = `SELECT name FROM sqlite_master WHERE type ='table' AND name NOT LIKE 'sqlite_%';`;
-    sqliteDb.all(allTablesQuery, [], (err: any, tables: Named[]) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(tables.map((table: Named) => table.name));
-      }
-    });
-  });
-}
-
-export async function getSqliteRows(sqliteDb: Database, tableName: string): Promise<any[]> {
-  return new Promise((resolve, reject) => {
-    const sql = `SELECT rowid as _id, * FROM "${tableName}"`;
-    sqliteDb.all(sql, [], (err: any, rows: any[] | PromiseLike<any[]>) => {
-      if (err) {
-        reject(new Error(`Failed to get sqlite3 table data for ${tableName}.\n${err}`));
-      } else {
-        resolve(rows);
-      }
-    });
-  });
-}
-
-export async function uploadToMongo(mongoDb: Db, tableName: string, rows: any[]): Promise<void> {
-  if (rows.length === 0) {
-    try {
-      await mongoDb.createCollection(tableName);
-    } catch (err) {
-      throw new Error(`Failed to create collection ${tableName} with error ${err}`);
-    }
-  } else {
-    try {
-      await mongoDb.collection(tableName).insertMany(rows, { ordered: false });
-    } catch (err) {
-      throw new Error(`Failed to insert ${typeof rows} with error ${err}`);
-    }
-  }
+  return result;
 }

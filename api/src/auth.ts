@@ -7,6 +7,8 @@ import { ParsedQs } from 'qs';
 import { addOrUpdateUser, addOrUpdateUserToken, refreshUser, tokenToUser } from './user.service';
 import { User } from './interfaces/user';
 
+export const _PBKDF_ROUNDS_ = 100000;
+
 declare global {
     namespace Express {
         interface Request {
@@ -35,59 +37,88 @@ export async function getValidAccessToken(user: Realm.User, next: (token: string
     }
 }
 
-export async function authenticateEmail(email: string, password: string, next: (user: Realm.User, token: string) => void, err: (error: string) => void) {
+export function authenticateEmail(email: string, password: string, next: (realmUser: Realm.User, user: User, token: string) => void, err: (error: string) => void): void {
     try {
         const credentials = Realm.Credentials.emailPassword(
             email.trim().toLowerCase(),
             password.trim()
         );
-        const user = await RealmApp.logIn(credentials);
-        if (!user) {
-            return err('Invalid email or password');
-        }
-        await addOrUpdateUser(email, password, user);
-        const token = user.accessToken ?? '';
-        if (token) {
-            await addOrUpdateUserToken(email, user, token);
-        }
-        return next(user, token);
+        RealmApp.logIn(credentials).then(async (realmUser) => {
+            if (!realmUser) {
+                err('Invalid email or password');
+                return;
+            }
+            addOrUpdateUser(email, password, realmUser).then((u) => {
+                if (!u) {
+                    err('Error during authentication');
+                    return;
+                }
+                const token = realmUser.accessToken ?? '';
+                if (token) {
+                    addOrUpdateUserToken(email, realmUser, token).then(() => {
+                        console.log('Added or updated user token, calling next');
+                        next(realmUser, u, token);
+                    }).catch((error) => {
+                        console.error('Error in authenticateEmail:', error);
+                        err('Error during authentication');
+                    });
+                    return;
+                }
+                next(realmUser, u, token);
+            });
+        }).catch((error) => {
+            console.error('Error in authenticateEmail:', error);
+            err('Error during authentication');
+        });
     } catch (error) {
         console.error('Error in authenticateEmail:', error);
         return err('Error during authentication');
     }
 }
 
-export async function validateAuth(req: Request<{}, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>, number>, next: (req: Request, res: Response, token: string) => void, err: ((arg0: string) => void)): Promise<void> {
+export function validateAuth(req: Request, res: Response, next: (req: Request, res: Response, realmUser?: Realm.User, user?: User) => void, err: ((arg0: string) => void)): void {
     try {
         console.log('validateAuth called!')
         if (req.body && req.body.email && req.body.password) {
+            console.log('Email and password provided');
             const email = req.body.email;
             const password = req.body.password;
-            await authenticateEmail(email, password, async (user, token) => {
+            authenticateEmail(email, password, async (realmUser: Realm.User, user: User, token) => {
                 //res.set('Authorization', `Bearer ${token}`);
-                next(req, res, token);
+                next(req, res, realmUser, user);
             }, (error) => {
                 res.status(401).send('Unauthorized');
-                err(error);
             });
             return;
         }
         // authorization token
-        if (!req.headers.authorization) {
+        const authorization = req.headers.authorization;
+        if (!authorization) {
+            console.log('No authorization header');
             res.status(401).send('Unauthorized');
-            return err('No Authorization header provided')
+            return;
         }
-        const bearerAuth = req.headers.authorization.split(' ');
+        console.log('Authorization:', authorization);
+        const bearerAuth = authorization.split(' ');
         if (bearerAuth.length !== 2 || bearerAuth[0] !== 'Bearer' || !bearerAuth[1]) {
+            console.log('Invalid authorization header');
             res.status(401).send('Unauthorized');
-            return err('Invalid Authorization header provided')
         }
-        const user: User | undefined = await tokenToUser(bearerAuth[1]);
-        if (!user) {
+        const token = bearerAuth[1];
+        console.log('Token:', token);
+        console.log('calling tokenToUser')
+        tokenToUser(token).then((user: User | undefined) => {
+            if (!user) {
+                console.log('No user found for token');
+                res.status(401).send('Unauthorized');
+            } else {
+                console.log('User found for token, calling next');
+                next(req, res, undefined, user)
+            }
+        }, (error) => {
+            console.log('Error in tokenToUser:', error);
             res.status(401).send('Unauthorized');
-            return err('Invalid token provided');
-        }
-        next(req, res, bearerAuth[1]);
+        });
     } catch (error) {
         console.error('Error in validateAuth:', error);
         res.status(500).send('Server error');

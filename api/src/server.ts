@@ -1,6 +1,6 @@
 import { exec } from 'child_process';
-import express, { NextFunction } from 'express';
-import { readFileSync, existsSync, rmSync } from 'fs';
+import express, { NextFunction, Errback } from 'express';
+import { readFileSync, existsSync, renameSync, unlinkSync } from 'fs';
 import { Request, Response } from 'express-serve-static-core';
 import path from 'path';
 import { environment, defaultPort, _API_DIR_, _REACT_DIR_ } from './environment';
@@ -14,6 +14,8 @@ import { randomBytes } from 'crypto';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { sqliteToMemory } from './sqlitemongo';
+import { processFile, upload } from './upload.service';
+import { User } from './interfaces/user';
 
 console.log("Starting services...")
 Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
@@ -42,10 +44,10 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
   );
 
   // Error handler middleware
-  app.use(function (err: Error, req: Request, res: Response, next: NextFunction) {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-  });
+  // app.use(function (err: Error, req: Request, res: Response) {
+  //   console.error(err.stack);
+  //   res.status(500).send('Something broke!');
+  // });
 
   app.post('/api/authenticate',
     [
@@ -62,8 +64,9 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
       const email = req.body.email;
       const password = req.body.password;
 
-      authenticateEmail(email, password, async (user: Realm.User, token: string) => {
+      authenticateEmail(email, password, async (realmUser: Realm.User, user: User, token: string) => {
         //res.set('Authorization', `Bearer ${token}`);
+        req.user = realmUser;
         res.json({user,token});
       }, (err) => {
         res.status(500).send(err);
@@ -121,70 +124,46 @@ Mongo.connect((m: typeof mongoose, db: mongoose.Connection) => {
   //   res.json("user addedd");
   // });
 
-  // Configure multer storage
-  const storage = diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, path.join(_API_DIR_, "uploads")+'/');
-    },
-    filename: (req, file, cb) => {
-      // Use crypto to generate a random filename
-      const randomName = randomBytes(16).toString('hex');
-      cb(null, `${randomName}${path.extname(file.originalname)}`);
-    },
-  });
-  const upload = multer({ storage });
-
-  app.post("/api/upload", upload.single('file'), async (req, res) => {
-    //validateAuth(req, res, () => {
+  app.post("/api/upload", upload.single('file'), (req: express.Request, res: express.Response) => {
+    validateAuth(req, res, async (req: express.Request, res: express.Response, realmUser: Realm.User | undefined, user: User | undefined) => {
+      console.log('upload called!', user, realmUser);
       // The request should have our file in 'file'
       const file = req.file;
       if (!file) {
         res.status(400).send('No file uploaded');
         return;
       }
-
-      const filename = file.originalname;
-      const filesize = file.size;
-      const filemimetype = file.mimetype;
-
-      console.log(`Uploaded file: ${filename} (${filesize} bytes)`);
-      console.log(`  mimetype: ${filemimetype}`);
-
-      // make sure filename is komplete.db3
-      if (filename !== 'komplete.db3') {
-        res.status(400).send('Invalid file uploaded');
+      
+      if (!user) {
+        res.status(401).send('Unauthorized');
         return;
       }
-
-      if (filemimetype !== 'application/x-sqlite3' && filemimetype !== 'application/octet-stream') {
-        console.warn(`WARNING: mimetype is ${filemimetype} instead of application/x-sqlite3`);
+  
+      try {        
+        const result = await processFile(user, file, res);
+        if (!result) {
+          res.status(500).send('Error processing file');
+        } else {
+            res.json({
+              filename: file.originalname,
+              filesize: file.size,
+              filetmimetype: file.mimetype,
+              contents: Array.from(result)
+            });
+        }
+      } catch (err) {
+        console.error(err);
+        res.status(500).send('Error processing file');
       }
-
-      if (!existsSync(file.path)) {
-        res.status(500).send('File not found');
-        return;
+  
+    }, () => {
+      // delete the uploaded file
+      if (req.file && req.file.path) {
+        unlinkSync(req.file.path);
+        console.log('Deleted file:', req.file.path);
       }
-
-      /* TODO - further validate the file before trying to load it into sqlite
-       * can we check a simple magic number?  or is there a better way?
-       * sqliteToMemory will filter out any tables that don't match our 
-       * schema or that we don't need
-       */
-
-      const result = await sqliteToMemory(file.path);
-      rmSync(file.path);
-      const resultJson = JSON.stringify(Array.from(result));
-
-      res.json({
-        filename,
-        filesize,
-        filemimetype,
-        contents: resultJson
-      });
-
-    // }, () => {
-    //   res.status(401).send('Unauthorized');
-    // });
+      res.status(401).send('Unauthorized');
+    });
   });
 
   app.get('*', (req, res) => {

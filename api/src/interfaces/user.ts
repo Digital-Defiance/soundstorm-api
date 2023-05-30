@@ -1,7 +1,8 @@
+import { BSON } from "realm";
 import { BaseModel } from "./baseModel";
 
 export interface User extends BaseModel {
-    id: string; // Realm ID
+    realm_id: BSON.ObjectId; // Realm ID
     displayName: string; // Display name of the user
     givenName: string; // Given name of the user
     surname: string; // Surname of the user
